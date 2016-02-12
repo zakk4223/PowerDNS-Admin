@@ -30,4 +30,4 @@ PDNS_API_KEY = 'you never know'
 
 # RECORDS ALLOWED TO EDIT
 # If you change these values, please change in ./static/admin/pages/scripts/table-editable.js also
-RECORDS_ALLOW_EDIT = ['A', 'AAAA', 'CNAME', 'SPF', 'PTR', 'MX', 'TXT']
+RECORDS_ALLOW_EDIT = ['A', 'AAAA', 'CNAME', 'SPF', 'PTR', 'MX', 'TXT', 'NS']
