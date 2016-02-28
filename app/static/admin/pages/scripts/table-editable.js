@@ -130,6 +130,7 @@ var TableEditable = function () {
                      crossDomain: true,
                      dataType: "json",
                      success: function (data, status, jqXHR) {
+                         oTable.record_changes = {"modifies": [], "deletes": [], "adds": []};
                          bootbox.alert("Applied changes record successfully.");
                      },
 
