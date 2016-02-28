@@ -242,8 +242,8 @@ def record_apply(domain_name):
         pdata = request.data
         jdata = json.loads(pdata)
         records = []
-
-        for j in jdata:
+        
+        for j in jdata['records']:
             record = {
                         "name": domain_name if j['record_name'] in ['@', ''] else j['record_name'] + '.' + domain_name,
                         "type": j['record_type'],
@@ -255,8 +255,15 @@ def record_apply(domain_name):
                     }
             records.append(record)
 
+        my_changes = jdata['changes']
+        for r in my_changes['deletes']:
+          r['record_name'] = domain_name if r['record_name'] in ['@', ''] else r['record_name'] + '.' + domain_name
+        for r in my_changes['modifies']:
+          r['record_name'] = domain_name if r['record_name'] in ['@', ''] else r['record_name'] + '.' + domain_name
+
+
         r = Record()
-        result = r.apply(domain_name, records)
+        result = r.apply(domain_name, records, my_changes)
         if result['status'] == 'ok':
             history = History(msg='Apply record changes to domain %s' % domain_name, detail=str(records), created_by=current_user.username)
             history.add()

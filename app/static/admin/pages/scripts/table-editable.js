@@ -71,6 +71,9 @@ var TableEditable = function () {
             oTable.fnUpdate('<a class="btn default btn-xs purple edit" href="javascript:;"> <i class="fa fa-edit"></i></a>', nRow, 5, false);
             oTable.fnUpdate('<a class="btn default btn-xs red delete" href="javascript:;"> <i class="fa fa-trash"></i></a>', nRow, 6, false);
             oTable.fnDraw();
+            var eRec = getRowObject(oTable, nRow);
+            oTable.record_changes["modifies"].push(eRec);
+
         }
 
         function cancelEditRow(oTable, nRow) {
@@ -84,10 +87,25 @@ var TableEditable = function () {
             oTable.fnDraw();
         }
 
+        function getRowObject(table, nRow) {
+
+          var record = {};
+          var r = table.fnGetData(nRow);
+          record["record_name"] = r[0].trim();
+          record["record_type"] = r[1].trim();
+          record["record_status"] = r[2].trim();
+          record["record_ttl"] = r[3].trim();
+          record["record_data"] = r[4].trim();
+
+          return record;
+        }
+
+
         function getTableData(table) {
             var rData = []
             // get all table data
             rData = table.fnGetData();
+
 
             // reformat - pretty format
             var records = []
@@ -100,7 +118,7 @@ var TableEditable = function () {
                 record["record_data"] = r[4].trim();
                 records.push(record);
             });
-            return records
+            return {"records": records, "changes": table.record_changes};
         }
 
         function applyChanges(data, url){
@@ -161,6 +179,8 @@ var TableEditable = function () {
             ] // set first column as a default sort by asc
         });
 
+        oTable.record_changes = {"modifies": [], "deletes": [], "adds": []};
+
         var tableWrapper = $("#tbl_record_manage_new_wrapper");
 
         tableWrapper.find(".dataTables_length select").select2({
@@ -208,6 +228,8 @@ var TableEditable = function () {
 
             bootbox.confirm("Are you sure to delete this record?", function(result) {
                 if (result == true){
+                    var delRec = getRowObject(oTable, nRow);
+                    oTable.record_changes["deletes"].push(delRec);
                     oTable.fnDeleteRow(nRow);
                 }
             }); 

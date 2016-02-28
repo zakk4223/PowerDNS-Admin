@@ -146,13 +146,12 @@ class User(db.Model):
                 return False
 
         elif method == 'LDAP':
-            #searchFilter = "cn=%s" % self.username
-            #try:
-            #    result = self.ldap_search(searchFilter, LDAP_SEARCH_BASE)
-            #except Exception, e:
-            #    raise
+            searchFilter = "(&(objectclass=user)(sAMAccountName=%s))" % self.username
+            try:
+                result = self.ldap_search(searchFilter, LDAP_SEARCH_BASE)
+            except Exception, e:
+                raise
 
-            result = True
             if not result:
                 logging.warning('User "%s" does not exist' % self.username)
                 return False
@@ -641,37 +640,68 @@ class Record(object):
             return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
 
 
-    def compare(self, domain_name, new_records):
+    def compare(self, domain_name, new_records, change_records):
         """
         Compare new records with current powerdns record data
         Input is a list of hashes (records)
         """
+        replace_records = [] 
+        delete_records = [] 
+
         # get list of current records we have in powerdns
-        current_records = self.get_record_data(domain_name)['records']
-        
+        #current_records = self.get_record_data(domain_name)['records']
+        done_rrs = {}
+ 
+        for dr in change_records['deletes']:
+            if (dr['record_name'],dr['record_type']) in done_rrs: continue
+            logging.debug(new_records)
+            remain_recs = [x for x in new_records if x['name'] == dr['record_name'] and x['type'] == dr['record_type']]
+            logging.debug(remain_recs)
+            if remain_recs:
+              replace_records.extend(remain_recs)
+            else:
+              delete_records.extend([{'name': dr['record_name'], 'type': dr['record_type']}])
+            done_rrs[dr['record_name'],dr['record_type']] = True
+
+
+         
+        for er in change_records['modifies']:
+            if (er['record_name'],er['record_type']) in done_rrs: continue
+            match_recs = [x for x in new_records if x['name'] == er['record_name'] and x['type'] == er['record_type']]
+            replace_records.extend(match_recs)
+            done_rrs[er['record_name'],er['record_type']] = True
+
+        #list_change_deletes = [[x['record_name'], x['record_type']] for x in change_records['deletes']]
         # convert them to list of list (just has [name, type]) instead of list of hash
         # to compare easier
-        list_current_records = [[x['name'],x['type']] for x in current_records]
-        list_new_records = [[x['name'],x['type']] for x in new_records]
-
+        #list_current_records = [[x['name'],x['type']] for x in current_records]
+        #list_new_records = [[x['name'],x['type']] for x in new_records]
+        
+        
         # get list of deleted records
         # they are the records which exist in list_current_records but not in list_new_records
-        list_deleted_records = [x for x in list_current_records if x not in list_new_records]
+        #list_deleted_records = [x for x in list_current_records if x not in list_new_records]
 
+        
         # convert back to list of hash
-        deleted_records = [x for x in current_records if [x['name'],x['type']] in list_deleted_records and x['type'] in app.config['RECORDS_ALLOW_EDIT']]
+        #deleted_records = [x for x in current_records if [x['name'],x['type']] in list_deleted_records and x['type'] in app.config['RECORDS_ALLOW_EDIT']]
 
         # return a tuple
-        return deleted_records, new_records
+        return delete_records, replace_records
 
 
-    def apply(self, domain, post_records):
+    def apply(self, domain, post_records, change_records):
         """
         Apply record changes to domain
         """
-        deleted_records, new_records = self.compare(domain, post_records)
+        deleted_records, new_records = self.compare(domain, post_records, change_records)
 
         records = []
+        logging.debug(change_records)
+        logging.debug("Deletes %s" % (str(deleted_records)))
+        logging.debug("Change/replace %s" % (str(new_records)))
+
+
         for r in deleted_records:
             record = {
                         "name": r['name'],
