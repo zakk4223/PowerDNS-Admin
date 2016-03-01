@@ -353,7 +353,6 @@ class Domain(db.Model):
     serial = db.Column(db.Integer)
     notified_serial = db.Column(db.Integer)
     last_check = db.Column(db.Integer)
-    soa_edit_api = db.Column(db.String(128))
 
     def __int__(self, id=None, name=None, master=None, type='NATIVE', serial=None, notified_serial=None, last_check=None):
         self.id = id
