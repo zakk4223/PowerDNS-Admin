@@ -448,7 +448,6 @@ class Domain(db.Model):
                     d.serial = data['serial']
                     d.notified_serial = data['notified_serial']
                     d.last_check = data['last_check']
-                    d.soa_edit_api = 'DEFAULT'
                     db.session.add(d)
                 try:
                     db.session.commit()
@@ -467,6 +466,7 @@ class Domain(db.Model):
         headers['X-API-Key'] = PDNS_API_KEY
         post_data = {
                         "name": domain_name,
+                        "soa_edit_api": "DEFAULT",
                         "kind": domain_type,
                         "masters": domain_master_ips,
                         "nameservers": domain_ns
