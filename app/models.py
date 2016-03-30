@@ -737,6 +737,10 @@ class Record(object):
         final_records = []
         records = sorted(records, key = lambda item: (item["name"], item["type"]))
         for key, group in itertools.groupby(records, lambda item: (item["name"], item["type"])):
+            set_ptr = False
+            if key[1] in ('A', 'AAAA'):
+                set_ptr = True
+
             final_records.append({
                     "name": key[0],
                     "type": key[1],
@@ -749,6 +753,7 @@ class Record(object):
                             "ttl": item['records'][0]['ttl'],
                             "type": key[1],
                             "priority": 10,
+                            ""set-ptr": set_ptr,
                         } for item in group
                     ]
                 })
