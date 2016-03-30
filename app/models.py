@@ -753,7 +753,7 @@ class Record(object):
                             "ttl": item['records'][0]['ttl'],
                             "type": key[1],
                             "priority": 10,
-                            ""set-ptr": set_ptr,
+                            "set-ptr": set_ptr,
                         } for item in group
                     ]
                 })
