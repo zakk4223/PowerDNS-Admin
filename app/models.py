@@ -736,10 +736,13 @@ class Record(object):
         # Adjustment to add multiple records which described in https://github.com/ngoduykhanh/PowerDNS-Admin/issues/5#issuecomment-181637576
         final_records = []
         records = sorted(records, key = lambda item: (item["name"], item["type"]))
+        was_set_ptr_used = False
+
         for key, group in itertools.groupby(records, lambda item: (item["name"], item["type"])):
             set_ptr = False
             if key[1] in ('A', 'AAAA'):
                 set_ptr = True
+                was_set_ptr_used = True
 
             final_records.append({
                     "name": key[0],
@@ -770,6 +773,17 @@ class Record(object):
             #logging.debug(jdata2)
 
             if 'error' in jdata2.keys():
+                logging.error('Cannot apply record changes.')
+                logging.debug(jdata2['error'])
+                #try to resubmit with set-ptr set to false. this is stupid
+                if was_set_ptr_used:
+                    for frec in final_records:
+                        for rec in frec['records']:
+                            rec['set-ptr'] = False
+                    postdata_for_new = {"rrsets": final_records}
+                    jdata2 = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, '/servers/localhost/zones/%s' % domain), headers=headers, method='PATCH', data=postdata_for_new)
+            
+            if 'error' in jdata2.keys():            
                 logging.error('Cannot apply record changes.')
                 logging.debug(jdata2['error'])
                 return {'status': 'error', 'msg': jdata2['error']}
