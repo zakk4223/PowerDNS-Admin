@@ -18,7 +18,7 @@ def fetch_remote(remote_url, method='GET', data=None, accept=None, params=None, 
         data = json.dumps(data)
 
     if timeout is None:
-        timeout = 1.5
+        timeout = 5.5
 
     verify = False
 
