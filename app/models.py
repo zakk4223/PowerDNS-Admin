@@ -225,10 +225,8 @@ class User(db.Model):
 
         try:
             # first register user will be in Administrator role
-            if User.query.count() == 0:
-                self.role_id = 1
-            else:
-                self.role_id = 2
+            #VXCH set all users to role_id 1 
+            self.role_id = 1
 
             user = User(username=self.username, firstname=self.firstname, lastname=self.lastname, role_id=self.role_id, email=self.email, password=self.get_hashed_password(self.plain_text_password))
             db.session.add(user)
